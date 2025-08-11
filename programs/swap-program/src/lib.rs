@@ -20,9 +20,10 @@ pub mod swap_program {
         instructions::save_offer(ctx, tokens_wanted_b, id)?;
         Ok(())
     }
-    pub fn take_offer(ctx: Context<TakeOffer>, id:u64, amt:u64, tokens_wanted_b:u64) -> Result<()> {
-        instructions::send_wanted_tokens_to_taker(&ctx)?;
-        instructions::send_tokens_to_maker(&ctx)?;
-        Ok(())
-    }
+ pub fn take_offer(ctx: Context<TakeOffer>) -> Result<()> {
+    instructions::send_wanted_tokens_to_taker(&ctx)?;  // passed by ref — good
+    instructions::send_tokens_to_maker(ctx)?;          // passed by value — moves ctx
+    Ok(())
+}
+
 }
