@@ -1,7 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_lang::prelude::{  Signer, InterfaceAccount,Program, Account ,System, Context, Result ,Interface };
 use anchor_spl::{token_interface::{TokenAccount,Mint,TokenInterface}, associated_token::AssociatedToken};
-use crate::transfer_tokns;
 use crate::{state::Offer, ANCHOR_DISCRIMINATOR};
 
 #[derive(Accounts)]
