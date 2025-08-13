@@ -2,7 +2,8 @@ use anchor_lang::prelude::*;
 use anchor_lang::prelude::{  Signer, InterfaceAccount,Program, Account ,System, Context, Result ,Interface };
 use anchor_spl::{token_interface::{TokenAccount,Mint,TokenInterface}, associated_token::AssociatedToken};
 use crate::instructions::transfer_tokns;
-use crate::{state::Offer, ANCHOR_DISCRIMINATOR};
+use crate::ANCHOR_DISCRIMINATOR;
+use crate::{state::Offer};
 
 #[derive(Accounts)]
 #[instruction(id:u64)]
