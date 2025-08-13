@@ -39,6 +39,18 @@
         { "name": "associatedTokenProgram", "isMut": false, "isSigner": false }
       ],
       "args": []
+    },
+    {
+      "name": "cancelOffer",
+      "accounts": [
+        { "name": "maker", "isMut": false, "isSigner": true },
+        { "name": "offer", "isMut": true, "isSigner": false },
+        { "name": "makerTokenAccountA", "isMut": true, "isSigner": false },
+        { "name": "vault", "isMut": true, "isSigner": false },
+        { "name": "tokenMintA", "isMut": false, "isSigner": false },
+        { "name": "tokenProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": []
     }
   ],
   "accounts": [

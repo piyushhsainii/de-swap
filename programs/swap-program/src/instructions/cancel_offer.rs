@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{ token_interface::{TokenAccount, TokenInterface, Mint}, *};
-use crate::{state::Offer};
+use crate::{instructions::transfer_tokns, state::Offer};
 
 
 #[derive(Accounts)]
@@ -33,7 +33,7 @@ pub struct CancelOffer<'info> {
 
 }
 
-pub fn transfer_vault_back_to_maker(ctx:Context<CancelOffer>)->Result<()>{
+pub fn transfer_vault_back_to_maker(ctx:&Context<CancelOffer>)->Result<()>{
     // transfer the tokens from vault back to the maker
     transfer_tokns(
         &ctx.accounts.vault,

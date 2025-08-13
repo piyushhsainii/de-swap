@@ -1,16 +1,14 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import {
-  Plus,
-  AlertCircle,
-  CheckCircle,
-  XCircle,
-  Loader2,
-  ArrowUpDown,
-} from "lucide-react";
+import { Plus, CheckCircle, Loader2, ArrowUpDown } from "lucide-react";
 import { clusterApiUrl, Connection, PublicKey } from "@solana/web3.js";
 import { getMint } from "@solana/spl-token";
+import { useWallet } from "@solana/wallet-adapter-react";
+import CustomTokenDialog from "./custom-token-dialog";
+import { Program } from "@coral-xyz/anchor";
+import IDL from "../../../programs/swap-program/src/IDL/swap_program.json";
+import { SwapProgram } from "../../../target/types/swap_program";
 // Mock data for demonstration
 const defaultTokens = [
   {
@@ -58,28 +56,13 @@ const mockOffers = [
   },
 ];
 
-// Mock validation function
-const validateTokenOnChain = async (address) => {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-  if (address.length < 40) {
-    throw new Error("Invalid token address");
-  }
-  return {
-    symbol: "TEST",
-    name: "Test Token",
-    decimals: 9,
-    logo: "🪙",
-  };
-};
-
 export default function SwapDashboard() {
-  const [isWalletConnected, setIsWalletConnected] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("price");
   const [isLoading, setIsLoading] = useState(false);
   const [tokens, setTokens] = useState(defaultTokens);
   const [customTokenDialog, setCustomTokenDialog] = useState(false);
-
+  const wallet = useWallet();
   // Custom token form state
   const [customToken, setCustomToken] = useState({
     address: "",
@@ -90,7 +73,18 @@ export default function SwapDashboard() {
   });
 
   // Validation state
-  const [validationState, setValidationState] = useState({
+  const [validationState, setValidationState] = useState<{
+    isValidating: boolean | null;
+    isValid: boolean | null;
+    error: any;
+    tokenInfo: {
+      supply: string;
+      decimals: number;
+      isInitialized: boolean;
+      mintAuthority: string | null;
+      freezeAuthority: string | null;
+    } | null;
+  }>({
     isValidating: false,
     isValid: null,
     error: null,
@@ -103,7 +97,11 @@ export default function SwapDashboard() {
   const [offerAmount, setOfferAmount] = useState("");
   const [offerPrice, setOfferPrice] = useState("");
 
-  const [submitState, setSubmitState] = useState({
+  const [submitState, setSubmitState] = useState<{
+    isSubmitting: boolean;
+    success: boolean;
+    error: any;
+  }>({
     isSubmitting: false,
     success: false,
     error: null,
@@ -121,7 +119,7 @@ export default function SwapDashboard() {
   );
   const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
   // Token validation function
-  const validateToken = async (address) => {
+  const validateToken = async (address: any) => {
     // Reset validation state
     setValidationState({
       isValidating: true,
@@ -159,21 +157,13 @@ export default function SwapDashboard() {
       setValidationState({
         isValidating: false,
         isValid: false,
-        error: err.message || "Failed to validate token",
+        error: "Failed to validate token",
         tokenInfo: null,
       });
     }
   };
 
-  const handleConnectWallet = async () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsWalletConnected(true);
-      setIsLoading(false);
-    }, 1500);
-  };
-
-  const handleTokenAddressChange = (address) => {
+  const handleTokenAddressChange = (address: any) => {
     setCustomToken((prev) => ({ ...prev, address }));
 
     // Simple timeout for validation - you could also use useEffect with debouncing
@@ -226,7 +216,7 @@ export default function SwapDashboard() {
     } catch (error) {
       setValidationState((prev) => ({
         ...prev,
-        error: error.message,
+        error: "Something went wrong",
       }));
     } finally {
       setIsLoading(false);
@@ -234,32 +224,16 @@ export default function SwapDashboard() {
   };
 
   const handleSubmitOffer = async () => {
-    if (
-      !isWalletConnected ||
-      !offerFrom ||
-      !offerTo ||
-      !offerAmount ||
-      !offerPrice
-    ) {
+    if (!offerFrom || !offerTo || !offerAmount || !offerPrice) {
       return;
     }
-
     setSubmitState({ isSubmitting: true, success: false, error: null });
-
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      setSubmitState({ isSubmitting: false, success: true, error: null });
-
-      // Reset form after success
-      setTimeout(() => {
-        setOfferFrom("");
-        setOfferTo("");
-        setOfferAmount("");
-        setOfferPrice("");
-        setSubmitState({ isSubmitting: false, success: false, error: null });
-      }, 2000);
+      const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
+      const program: Program<SwapProgram> = new Program(IDL, {
+        connection: connection,
+      });
+      program.methods;
     } catch (error) {
       setSubmitState({
         isSubmitting: false,
@@ -267,15 +241,6 @@ export default function SwapDashboard() {
         error: "Failed to create offer. Please try again.",
       });
     }
-  };
-
-  const handleTakeOffer = async (offerId) => {
-    if (!isWalletConnected) return;
-
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 2000);
   };
 
   const handleSwapTokens = () => {
@@ -291,16 +256,7 @@ export default function SwapDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2">
-            Token Swap Dashboard
-          </h1>
-          <p className="text-gray-600">
-            Create and manage your token swap offers
-          </p>
-        </div>
-
+      <div className="max-w-6xl mx-auto">
         <div className="bg-white/80 backdrop-blur-sm border-0 shadow-xl rounded-2xl">
           <div className="bg-gradient-to-r from-blue-500/5 to-purple-500/5 rounded-t-2xl p-6">
             <h2 className="text-2xl text-gray-900 flex items-center gap-2 font-bold">
@@ -361,8 +317,7 @@ export default function SwapDashboard() {
                   min="0"
                   value={offerAmount}
                   onChange={(e) => setOfferAmount(e.target.value)}
-                  disabled={!isWalletConnected}
-                  className="w-full rounded-xl border border-gray-200 bg-white/50 backdrop-blur-sm transition-all duration-200 hover:bg-white/70 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-300 p-3 disabled:opacity-50"
+                  className="w-full rounded-xl bg-white/50 backdrop-blur-sm transition-all duration-200 hover:bg-white/70 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-300 p-3 disabled:opacity-50 border border-purple-700"
                 />
               </div>
 
@@ -397,14 +352,14 @@ export default function SwapDashboard() {
                   </div>
                 </div>
                 <input
-                  placeholder="Price per token"
+                  placeholder="Tokens wanted"
                   type="number"
                   step="0.000001"
                   min="0"
                   value={offerPrice}
                   onChange={(e) => setOfferPrice(e.target.value)}
-                  disabled={!isWalletConnected}
-                  className="w-full rounded-xl border border-gray-200 bg-white/50 backdrop-blur-sm transition-all duration-200 hover:bg-white/70 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-300 p-3 disabled:opacity-50"
+                  disabled={!wallet.connected}
+                  className="w-full rounded-xl border border-purple-700 bg-white/50 backdrop-blur-sm transition-all duration-200 hover:bg-white/70 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-300 p-3 disabled:opacity-50"
                 />
               </div>
             </div>
@@ -413,7 +368,7 @@ export default function SwapDashboard() {
               <button
                 onClick={handleSubmitOffer}
                 disabled={
-                  !isWalletConnected ||
+                  !wallet.connected ||
                   !offerFrom ||
                   !offerTo ||
                   !offerAmount ||
@@ -454,7 +409,7 @@ export default function SwapDashboard() {
                 </p>
               )}
 
-              {!isWalletConnected && (
+              {!wallet.connected && (
                 <p className="text-sm text-gray-500 text-center">
                   Connect your wallet to create offers
                 </p>
@@ -465,180 +420,16 @@ export default function SwapDashboard() {
 
         {/* Custom Token Dialog */}
         {customTokenDialog && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-              <div className="p-6 border-b">
-                <h3 className="text-lg font-bold">Import Custom Token</h3>
-                <p className="text-gray-600 text-sm mt-1">
-                  Add a custom Solana token to your swap options
-                </p>
-              </div>
-
-              <div className="p-6 space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Token Address *
-                  </label>
-                  <div className="relative">
-                    <input
-                      placeholder="Enter token mint address..."
-                      value={customToken.address}
-                      onChange={(e) => handleTokenAddressChange(e.target.value)}
-                      className="w-full font-mono text-sm pr-10 p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-300"
-                    />
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      {validationState.isValidating && (
-                        <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
-                      )}
-                      {validationState.isValid === true && (
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                      )}
-                      {validationState.isValid === false && (
-                        <XCircle className="h-4 w-4 text-red-500" />
-                      )}
-                    </div>
-                  </div>
-                  {validationState.error && (
-                    <p className="text-sm text-red-600 mt-1 bg-red-50 p-2 rounded-lg">
-                      {validationState.error}
-                    </p>
-                  )}
-                  {validationState.isValid === true && (
-                    <p className="text-sm text-green-600 mt-1 bg-green-50 p-2 rounded-lg">
-                      ✓ Token found on devnet
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Symbol *
-                  </label>
-                  <input
-                    placeholder="e.g., BONK"
-                    value={customToken.symbol}
-                    onChange={(e) =>
-                      setCustomToken((prev) => ({
-                        ...prev,
-                        symbol: e.target.value,
-                      }))
-                    }
-                    className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-300"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">Name</label>
-                  <input
-                    placeholder="e.g., Bonk Token"
-                    value={customToken.name}
-                    onChange={(e) =>
-                      setCustomToken((prev) => ({
-                        ...prev,
-                        name: e.target.value,
-                      }))
-                    }
-                    className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-300"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Decimals
-                    </label>
-                    <input
-                      type="number"
-                      placeholder="9"
-                      min="0"
-                      max="18"
-                      value={customToken.decimals}
-                      onChange={(e) =>
-                        setCustomToken((prev) => ({
-                          ...prev,
-                          decimals: e.target.value,
-                        }))
-                      }
-                      className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-300"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Logo Emoji
-                    </label>
-                    <input
-                      placeholder="🪙"
-                      maxLength="2"
-                      value={customToken.logo}
-                      onChange={(e) =>
-                        setCustomToken((prev) => ({
-                          ...prev,
-                          logo: e.target.value,
-                        }))
-                      }
-                      className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-300"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2 p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
-                  <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-                  <div className="text-sm text-yellow-800">
-                    <p className="font-medium">Security Notice:</p>
-                    <p>
-                      Only import tokens you trust. Malicious tokens can result
-                      in loss of funds. We validate that the token exists on
-                      devnet, but cannot guarantee safety.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-6 border-t flex gap-2 justify-end">
-                <button
-                  onClick={() => {
-                    setCustomTokenDialog(false);
-                    setCustomToken({
-                      address: "",
-                      symbol: "",
-                      name: "",
-                      decimals: "",
-                      logo: "",
-                    });
-                    setValidationState({
-                      isValidating: false,
-                      isValid: null,
-                      error: null,
-                      tokenInfo: null,
-                    });
-                  }}
-                  className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all duration-200"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleImportCustomToken}
-                  disabled={
-                    !customToken.address ||
-                    !customToken.symbol ||
-                    validationState.isValid !== true ||
-                    isLoading
-                  }
-                  className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
-                >
-                  {isLoading ? (
-                    <span className="flex items-center">
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Importing...
-                    </span>
-                  ) : (
-                    "Import Token"
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
+          <CustomTokenDialog
+            customToken={customToken}
+            isLoading={isLoading}
+            setValidationState={setValidationState}
+            validationState={validationState}
+            handleImportCustomToken={handleImportCustomToken}
+            handleTokenAddressChange={handleTokenAddressChange}
+            setCustomToken={setCustomToken}
+            setCustomTokenDialog={setCustomTokenDialog}
+          />
         )}
       </div>
     </div>

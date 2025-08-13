@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_lang::prelude::{ Accounts, Signer, InterfaceAccount,Program, Account ,System, Context, Result ,Interface };
+use crate::instructions::transfer_tokns;
 use crate::{state::Offer};
 use anchor_spl::{
     associated_token::AssociatedToken,
