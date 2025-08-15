@@ -1,68 +1,91 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Plus, CheckCircle, Loader2, ArrowUpDown } from "lucide-react";
-import { clusterApiUrl, Connection, PublicKey } from "@solana/web3.js";
-import { getMint } from "@solana/spl-token";
-import { useWallet } from "@solana/wallet-adapter-react";
+import {
+  clusterApiUrl,
+  Connection,
+  PublicKey,
+  sendAndConfirmTransaction,
+  SystemProgram,
+  Transaction,
+} from "@solana/web3.js";
+import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  getAssociatedTokenAddress,
+  getMint,
+  TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
+import { useAnchorWallet, useWallet } from "@solana/wallet-adapter-react";
 import CustomTokenDialog from "./custom-token-dialog";
-import { Program } from "@coral-xyz/anchor";
+import { AnchorProvider, BN, getProvider, Program } from "@coral-xyz/anchor";
 import IDL from "../../../programs/swap-program/src/IDL/swap_program.json";
-import { SwapProgram } from "../../../target/types/swap_program";
+import { SwapProgram } from "../../../programs/swap-program/src/IDL/swap_program";
+import { toast } from "sonner";
 // Mock data for demonstration
-const defaultTokens = [
+const MainNetTokens = [
   {
     symbol: "SOL",
     name: "Solana",
-    address: "So11111111111111111111111111111111111111112",
+    address: new PublicKey("So11111111111111111111111111111111111111112"),
     decimals: 9,
     logo: "🟣",
   },
   {
     symbol: "USDC",
     name: "USD Coin",
-    address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+    address: new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"),
     decimals: 6,
     logo: "🔵",
   },
   {
     symbol: "RAY",
     name: "Raydium",
-    address: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
+    address: new PublicKey("4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R"),
     decimals: 6,
     logo: "⚡",
   },
 ];
 
-// Mock offers data
-const mockOffers = [
+const defaultTokens = [
   {
-    id: "1",
-    tokenFrom: "SOL",
-    tokenTo: "USDC",
-    amount: 10,
-    price: 180,
-    expires: "2h",
-    user: "0x1234...5678",
+    symbol: "SOL",
+    name: "Solana",
+    address: new PublicKey("So11111111111111111111111111111111111111112"), // same on all clusters
+    decimals: 9,
+    logo: "🟣",
   },
   {
-    id: "2",
-    tokenFrom: "USDC",
-    tokenTo: "RAY",
-    amount: 1000,
-    price: 2.5,
-    expires: "1d",
-    user: "0xabcd...efgh",
+    symbol: "USDC",
+    name: "USD Coin (Devnet)",
+    address: new PublicKey("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"), // devnet USDC
+    decimals: 6,
+    logo: "🔵",
+  },
+  {
+    symbol: "RAY",
+    name: "Raydium (Devnet)",
+    address: new PublicKey("Cm8pCfXg7tVb2xzVj63Bx2tP4Z4HcUXkM9ZAcb6D3r2S"), // devnet Raydium test mint
+    decimals: 6,
+    logo: "⚡",
   },
 ];
 
 export default function SwapDashboard() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState("price");
   const [isLoading, setIsLoading] = useState(false);
-  const [tokens, setTokens] = useState(defaultTokens);
+  const [tokens, setTokens] = useState<
+    {
+      symbol: string;
+      name: string;
+      address: PublicKey;
+      decimals: number;
+      logo: string;
+    }[]
+  >(defaultTokens);
   const [customTokenDialog, setCustomTokenDialog] = useState(false);
   const wallet = useWallet();
+  const anchorWallet = useAnchorWallet();
+
   // Custom token form state
   const [customToken, setCustomToken] = useState({
     address: "",
@@ -96,6 +119,8 @@ export default function SwapDashboard() {
   const [offerTo, setOfferTo] = useState("");
   const [offerAmount, setOfferAmount] = useState("");
   const [offerPrice, setOfferPrice] = useState("");
+  const [offerFromATA, setFromofferATA] = useState<PublicKey | null>(null);
+  const [offerToATA, setofferToATA] = useState<PublicKey | null>(null);
 
   const [submitState, setSubmitState] = useState<{
     isSubmitting: boolean;
@@ -107,16 +132,6 @@ export default function SwapDashboard() {
     error: null,
   });
 
-  // Memoized filtered offers to prevent unnecessary re-renders
-  const filteredOffers = useMemo(
-    () =>
-      mockOffers.filter(
-        (offer) =>
-          offer.tokenFrom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          offer.tokenTo.toLowerCase().includes(searchTerm.toLowerCase())
-      ),
-    [searchTerm]
-  );
   const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
   // Token validation function
   const validateToken = async (address: any) => {
@@ -185,7 +200,7 @@ export default function SwapDashboard() {
       const newToken = {
         symbol: customToken.symbol.toUpperCase(),
         name: customToken.name || customToken.symbol,
-        address: customToken.address,
+        address: new PublicKey(customToken.address),
         decimals: Number.parseInt(customToken.decimals) || 9,
         logo: customToken.logo || "🪙",
       };
@@ -224,22 +239,110 @@ export default function SwapDashboard() {
   };
 
   const handleSubmitOffer = async () => {
-    if (!offerFrom || !offerTo || !offerAmount || !offerPrice) {
+    if (
+      !offerFrom ||
+      !offerTo ||
+      !offerAmount ||
+      !offerPrice ||
+      !wallet.publicKey
+    ) {
       return;
     }
     setSubmitState({ isSubmitting: true, success: false, error: null });
     try {
       const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
-      const program: Program<SwapProgram> = new Program(IDL, {
-        connection: connection,
+      console.log(connection);
+
+      if (!anchorWallet) return;
+      const programId = new PublicKey(IDL.metadata.address);
+      const provider = new AnchorProvider(connection, anchorWallet, {
+        commitment: "confirmed",
       });
-      program.methods;
+      if (!offerFromATA) {
+        toast("Invalid offer address");
+        return;
+      }
+      const program = new Program<SwapProgram>(IDL, programId, provider);
+      if (!offerToATA) return toast("Invalid wanted token address");
+
+      function randomU64() {
+        const buf = new Uint8Array(8);
+        window.crypto.getRandomValues(buf);
+        const hex = Array.from(buf)
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("");
+        return new BN(hex, 16);
+      }
+      const id = randomU64();
+      const amountBN = new BN(parseInt(offerAmount));
+      const priceBN = new BN(parseInt(offerPrice));
+      const tokenAMint = defaultTokens.find((data) => offerFrom == data.symbol);
+      const tokenBMint = defaultTokens.find((data) => offerTo == data.symbol);
+      if (!tokenAMint || !tokenBMint) return {};
+      // offer
+      const offer = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("offer"),
+          Buffer.from(wallet.publicKey.toBytes()),
+          id.toArrayLike(Buffer, "le", 8),
+        ],
+        programId
+      );
+      // deriving vault address
+      const vault = await getAssociatedTokenAddress(
+        tokenAMint?.address,
+        offer[0],
+        true,
+        TOKEN_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      );
+      console.log(offerFromATA.toString());
+      // creating an instruction
+      const instruction = await program.methods
+        .makeOffer(id, amountBN, priceBN)
+        .accounts({
+          tokenA: tokenAMint?.address,
+          tokenB: tokenBMint?.address,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          maker: wallet.publicKey,
+          makerAccountTokenA: offerFromATA,
+          offer: offer[0],
+          vault: vault,
+          systemProgram: SystemProgram.programId,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        })
+        .instruction();
+      const latestBlockHash = await connection.getLatestBlockhash();
+      // creating an transaction
+      const tx = new Transaction({
+        feePayer: wallet.publicKey,
+        blockhash: latestBlockHash.blockhash,
+        lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+      }).add(instruction);
+      // send the tx to blockchain
+      const signedTx = await wallet.signTransaction(tx);
+      const sig = await connection.sendRawTransaction(signedTx.serialize(), {
+        skipPreflight: false,
+      });
+
+      await connection.confirmTransaction({
+        signature: sig,
+        blockhash: latestBlockHash.blockhash,
+        lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+      });
+      setSubmitState({
+        isSubmitting: false,
+        success: true,
+        error: null,
+      });
     } catch (error) {
+      console.log(error);
       setSubmitState({
         isSubmitting: false,
         success: false,
         error: "Failed to create offer. Please try again.",
       });
+      toast("Error occured");
     }
   };
 
@@ -252,6 +355,10 @@ export default function SwapDashboard() {
     setOfferTo(tempFrom);
     setOfferAmount(tempPrice);
     setOfferPrice(tempAmount);
+    const tempOffertOATA = offerToATA;
+    const tempOfferFromATA = offerFromATA;
+    setofferToATA(tempOfferFromATA);
+    setFromofferATA(tempOffertOATA);
   };
 
   return (
@@ -291,12 +398,31 @@ export default function SwapDashboard() {
                   <div className="flex items-center gap-2">
                     <select
                       value={offerFrom}
-                      onChange={(e) => setOfferFrom(e.target.value)}
+                      onChange={async (e) => {
+                        setOfferFrom(e.target.value);
+                        const selectedToken = tokens.find(
+                          (data) => e.target.value == data.symbol
+                        );
+                        if (!selectedToken) return toast("Invalid offer token");
+                        if (!wallet.publicKey)
+                          return toast("Wallet not connected!");
+                        let tokenA;
+                        tokenA = await getAssociatedTokenAddress(
+                          selectedToken.address,
+                          wallet.publicKey,
+                          false,
+                          TOKEN_PROGRAM_ID
+                        );
+                        setFromofferATA(tokenA);
+                      }}
                       className="flex-1 rounded-xl border border-gray-200 bg-white/50 backdrop-blur-sm transition-all duration-200 hover:bg-white/70 focus:ring-2 focus:ring-blue-500/20 p-3"
                     >
                       <option value="">Select token to offer</option>
                       {tokens.map((token) => (
-                        <option key={token.address} value={token.symbol}>
+                        <option
+                          key={token.address.toString()}
+                          value={token.symbol}
+                        >
                           {token.logo} {token.symbol} - {token.name}
                         </option>
                       ))}
@@ -319,6 +445,21 @@ export default function SwapDashboard() {
                   onChange={(e) => setOfferAmount(e.target.value)}
                   className="w-full rounded-xl bg-white/50 backdrop-blur-sm transition-all duration-200 hover:bg-white/70 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-300 p-3 disabled:opacity-50 border border-purple-700"
                 />
+                {/* <div>
+                  <label
+                    htmlFor=""
+                    className="flex gap-1 items-center text-purple-700 text-sm font-semibold"
+                  >
+                    {" "}
+                    <Wallet size={15} color="purple" /> Offer ATA{" "}
+                  </label>
+                  <input
+                    value={}
+                    type="text"
+                    placeholder="Associated Token Address"
+                    className="w-full rounded-xl border border-purple-700 bg-white/50 backdrop-blur-sm transition-all duration-200 hover:bg-white/70 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-300 p-3 disabled:opacity-50 placeholder:text-sm text-xs"
+                  />
+                </div> */}
               </div>
 
               <div className="space-y-3">
@@ -332,12 +473,31 @@ export default function SwapDashboard() {
                   <div className="flex items-center gap-2">
                     <select
                       value={offerTo}
-                      onChange={(e) => setOfferTo(e.target.value)}
+                      onChange={async (e) => {
+                        setOfferTo(e.target.value);
+                        const selectedToken = tokens.find(
+                          (data) => e.target.value == data.symbol
+                        );
+                        if (!selectedToken) return toast("Invalid offer token");
+                        if (!wallet.publicKey)
+                          return toast("Wallet not connected!");
+                        let tokenB;
+                        tokenB = await getAssociatedTokenAddress(
+                          selectedToken.address,
+                          wallet.publicKey,
+                          false,
+                          TOKEN_PROGRAM_ID
+                        );
+                        setofferToATA(tokenB);
+                      }}
                       className="flex-1 rounded-xl border border-gray-200 bg-white/50 backdrop-blur-sm transition-all duration-200 hover:bg-white/70 focus:ring-2 focus:ring-blue-500/20 p-3"
                     >
                       <option value="">Select token you want</option>
                       {tokens.map((token) => (
-                        <option key={token.address} value={token.symbol}>
+                        <option
+                          key={token.address.toString()}
+                          value={token.symbol}
+                        >
                           {token.logo} {token.symbol} - {token.name}
                         </option>
                       ))}
@@ -358,9 +518,23 @@ export default function SwapDashboard() {
                   min="0"
                   value={offerPrice}
                   onChange={(e) => setOfferPrice(e.target.value)}
-                  disabled={!wallet.connected}
                   className="w-full rounded-xl border border-purple-700 bg-white/50 backdrop-blur-sm transition-all duration-200 hover:bg-white/70 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-300 p-3 disabled:opacity-50"
                 />
+                {/* <div>
+                  <label
+                    htmlFor=""
+                    className="flex gap-1 items-center text-purple-700 text-sm font-semibold"
+                  >
+                    <Wallet size={15} color="purple" /> Tokens wanted ATA{" "}
+                  </label>
+                  <input
+                    value={offerToATA?.toString() ?? ""}
+                    type="text"
+                    readOnly
+                    placeholder="Associated Token Address"
+                    className="w-full rounded-xl border border-purple-700 bg-white/50 backdrop-blur-sm transition-all duration-200 hover:bg-white/70 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-300 p-3 disabled:opacity-50 placeholder:text-sm text-xs"
+                  />
+                </div> */}
               </div>
             </div>
 

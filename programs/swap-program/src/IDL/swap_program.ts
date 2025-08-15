@@ -5,78 +5,63 @@
  * IDL can be found at `target/idl/swap_program.json`.
  */
 export type SwapProgram = {
-  "address": "CFNL7NzBbS4tWAmWd5VKSkL34L1xdxqQYXX2ho5uExvH",
-  "metadata": {
-    "name": "swapProgram",
-    "version": "0.1.0",
-    "spec": "0.1.0",
-    "description": "Created with Anchor"
-  },
-  "instructions": [
+  address: "CFNL7NzBbS4tWAmWd5VKSkL34L1xdxqQYXX2ho5uExvH";
+  metadata: {
+    name: "swap_program";
+    version: "0.1.0";
+    spec: "0.1.0";
+    description: "Created with Anchor";
+  };
+  instructions: [
     {
-      "name": "cancelOffer",
-      "discriminator": [
-        92,
-        203,
-        223,
-        40,
-        92,
-        89,
-        53,
-        119
-      ],
-      "accounts": [
+      name: "cancelOffer";
+      discriminator: [92, 203, 223, 40, 92, 89, 53, 119];
+      accounts: [
         {
-          "name": "maker",
-          "signer": true
+          name: "maker";
+          signer: true;
         },
         {
-          "name": "offer",
-          "writable": true,
-          "pda": {
-            "seeds": [
+          name: "offer";
+          writable: true;
+          pda: {
+            seeds: [
               {
-                "kind": "const",
-                "value": [
-                  111,
-                  102,
-                  102,
-                  101,
-                  114
-                ]
+                kind: "const";
+                value: [111, 102, 102, 101, 114];
               },
               {
-                "kind": "account",
-                "path": "maker"
+                kind: "account";
+                path: "maker";
               },
               {
-                "kind": "arg",
-                "path": "id"
+                kind: "arg";
+                path: "id";
               }
-            ]
-          }
+            ];
+          };
         },
         {
-          "name": "makerTokenAccountA",
-          "writable": true,
-          "pda": {
-            "seeds": [
+          name: "makerTokenAccountA";
+          writable: true;
+          pda: {
+            seeds: [
               {
-                "kind": "account",
-                "path": "offer"
+                kind: "account";
+                path: "offer";
               },
               {
-                "kind": "account",
-                "path": "tokenProgram"
+                kind: "account";
+                path: "tokenProgram";
               },
               {
-                "kind": "account",
-                "path": "tokenMintA"
+                kind: "account";
+                path: "tokenMintA";
               }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
+            ];
+            program: {
+              kind: "const";
+              value: [
                 140,
                 151,
                 37,
@@ -109,31 +94,31 @@ export type SwapProgram = {
                 233,
                 248,
                 89
-              ]
-            }
-          }
+              ];
+            };
+          };
         },
         {
-          "name": "vault",
-          "writable": true,
-          "pda": {
-            "seeds": [
+          name: "vault";
+          writable: true;
+          pda: {
+            seeds: [
               {
-                "kind": "account",
-                "path": "offer"
+                kind: "account";
+                path: "offer";
               },
               {
-                "kind": "account",
-                "path": "tokenProgram"
+                kind: "account";
+                path: "tokenProgram";
               },
               {
-                "kind": "account",
-                "path": "tokenMintA"
+                kind: "account";
+                path: "tokenMintA";
               }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
+            ];
+            program: {
+              kind: "const";
+              value: [
                 140,
                 151,
                 37,
@@ -166,64 +151,55 @@ export type SwapProgram = {
                 233,
                 248,
                 89
-              ]
-            }
-          }
+              ];
+            };
+          };
         },
         {
-          "name": "tokenMintA"
+          name: "tokenMintA";
         },
         {
-          "name": "tokenProgram"
+          name: "tokenProgram";
         }
-      ],
-      "args": []
+      ];
+      args: [];
     },
     {
-      "name": "makeOffer",
-      "discriminator": [
-        214,
-        98,
-        97,
-        35,
-        59,
-        12,
-        44,
-        178
-      ],
-      "accounts": [
+      name: "makeOffer";
+      discriminator: [214, 98, 97, 35, 59, 12, 44, 178];
+      accounts: [
         {
-          "name": "maker",
-          "writable": true,
-          "signer": true
+          name: "maker";
+          writable: true;
+          signer: true;
         },
         {
-          "name": "tokenA"
+          name: "tokenA";
         },
         {
-          "name": "tokenB"
+          name: "tokenB";
         },
         {
-          "name": "makerAccountTokenA",
-          "writable": true,
-          "pda": {
-            "seeds": [
+          name: "makerAccountTokenA";
+          writable: true;
+          pda: {
+            seeds: [
               {
-                "kind": "account",
-                "path": "maker"
+                kind: "account";
+                path: "maker";
               },
               {
-                "kind": "account",
-                "path": "tokenProgram"
+                kind: "account";
+                path: "tokenProgram";
               },
               {
-                "kind": "account",
-                "path": "tokenA"
+                kind: "account";
+                path: "tokenA";
               }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
+            ];
+            program: {
+              kind: "const";
+              value: [
                 140,
                 151,
                 37,
@@ -256,31 +232,31 @@ export type SwapProgram = {
                 233,
                 248,
                 89
-              ]
-            }
-          }
+              ];
+            };
+          };
         },
         {
-          "name": "vault",
-          "writable": true,
-          "pda": {
-            "seeds": [
+          name: "vault";
+          writable: true;
+          pda: {
+            seeds: [
               {
-                "kind": "account",
-                "path": "offer"
+                kind: "account";
+                path: "offer";
               },
               {
-                "kind": "account",
-                "path": "tokenProgram"
+                kind: "account";
+                path: "tokenProgram";
               },
               {
-                "kind": "account",
-                "path": "tokenA"
+                kind: "account";
+                path: "tokenA";
               }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
+            ];
+            program: {
+              kind: "const";
+              value: [
                 140,
                 151,
                 37,
@@ -313,121 +289,100 @@ export type SwapProgram = {
                 233,
                 248,
                 89
-              ]
-            }
-          }
+              ];
+            };
+          };
         },
         {
-          "name": "offer",
-          "writable": true,
-          "pda": {
-            "seeds": [
+          name: "offer";
+          writable: true;
+          pda: {
+            seeds: [
               {
-                "kind": "const",
-                "value": [
-                  111,
-                  102,
-                  102,
-                  101,
-                  114
-                ]
+                kind: "const";
+                value: [111, 102, 102, 101, 114];
               },
               {
-                "kind": "account",
-                "path": "maker"
+                kind: "account";
+                path: "maker";
               },
               {
-                "kind": "arg",
-                "path": "id"
+                kind: "arg";
+                path: "id";
               }
-            ]
-          }
+            ];
+          };
         },
         {
-          "name": "systemProgram",
-          "address": "11111111111111111111111111111111"
+          name: "systemProgram";
+          address: "11111111111111111111111111111111";
         },
         {
-          "name": "tokenProgram"
+          name: "tokenProgram";
         },
         {
-          "name": "associatedTokenProgram",
-          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+          name: "associatedTokenProgram";
+          address: "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
         }
-      ],
-      "args": [
+      ];
+      args: [
         {
-          "name": "id",
-          "type": "u64"
+          name: "id";
+          type: "u64";
         },
         {
-          "name": "amt",
-          "type": "u64"
+          name: "amt";
+          type: "u64";
         },
         {
-          "name": "tokensWantedB",
-          "type": "u64"
+          name: "tokensWantedB";
+          type: "u64";
         }
-      ]
+      ];
     },
     {
-      "name": "takeOffer",
-      "discriminator": [
-        128,
-        156,
-        242,
-        207,
-        237,
-        192,
-        103,
-        240
-      ],
-      "accounts": [
+      name: "takeOffer";
+      discriminator: [128, 156, 242, 207, 237, 192, 103, 240];
+      accounts: [
         {
-          "name": "taker",
-          "writable": true,
-          "signer": true
+          name: "taker";
+          writable: true;
+          signer: true;
         },
         {
-          "name": "maker",
-          "writable": true,
-          "relations": [
-            "offer"
-          ]
+          name: "maker";
+          writable: true;
+          relations: ["offer"];
         },
         {
-          "name": "tokenMintA",
-          "relations": [
-            "offer"
-          ]
+          name: "tokenMintA";
+          relations: ["offer"];
         },
         {
-          "name": "tokenMintB",
-          "relations": [
-            "offer"
-          ]
+          name: "tokenMintB";
+          relations: ["offer"];
         },
         {
-          "name": "takerTokenAccountA",
-          "writable": true,
-          "pda": {
-            "seeds": [
+          name: "takerTokenAccountA";
+          writable: true;
+          pda: {
+            seeds: [
               {
-                "kind": "account",
-                "path": "taker"
+                kind: "account";
+                path: "taker";
               },
               {
-                "kind": "account",
-                "path": "tokenProgram"
+                kind: "account";
+                path: "tokenProgram";
               },
               {
-                "kind": "account",
-                "path": "tokenMintA"
+                kind: "account";
+                path: "tokenMintA";
               }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
+            ];
+            program: {
+              kind: "const";
+              value: [
                 140,
                 151,
                 37,
@@ -460,22 +415,22 @@ export type SwapProgram = {
                 233,
                 248,
                 89
-              ]
-            }
-          }
+              ];
+            };
+          };
         },
         {
-          "name": "takerTokenAccountB",
-          "writable": true,
-          "pda": {
-            "seeds": [
+          name: "takerTokenAccountB";
+          writable: true;
+          pda: {
+            seeds: [
               {
-                "kind": "account",
-                "path": "taker"
+                kind: "account";
+                path: "taker";
               },
               {
-                "kind": "const",
-                "value": [
+                kind: "const";
+                value: [
                   6,
                   221,
                   246,
@@ -508,16 +463,16 @@ export type SwapProgram = {
                   255,
                   0,
                   169
-                ]
+                ];
               },
               {
-                "kind": "account",
-                "path": "tokenMintB"
+                kind: "account";
+                path: "tokenMintB";
               }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
+            ];
+            program: {
+              kind: "const";
+              value: [
                 140,
                 151,
                 37,
@@ -550,31 +505,31 @@ export type SwapProgram = {
                 233,
                 248,
                 89
-              ]
-            }
-          }
+              ];
+            };
+          };
         },
         {
-          "name": "makerTokenAccountB",
-          "writable": true,
-          "pda": {
-            "seeds": [
+          name: "makerTokenAccountB";
+          writable: true;
+          pda: {
+            seeds: [
               {
-                "kind": "arg",
-                "path": "maker"
+                kind: "arg";
+                path: "maker";
               },
               {
-                "kind": "account",
-                "path": "tokenProgram"
+                kind: "account";
+                path: "tokenProgram";
               },
               {
-                "kind": "account",
-                "path": "tokenMintB"
+                kind: "account";
+                path: "tokenMintB";
               }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
+            ];
+            program: {
+              kind: "const";
+              value: [
                 140,
                 151,
                 37,
@@ -607,57 +562,51 @@ export type SwapProgram = {
                 233,
                 248,
                 89
-              ]
-            }
-          }
+              ];
+            };
+          };
         },
         {
-          "name": "offer",
-          "writable": true,
-          "pda": {
-            "seeds": [
+          name: "offer";
+          writable: true;
+          pda: {
+            seeds: [
               {
-                "kind": "const",
-                "value": [
-                  111,
-                  102,
-                  102,
-                  101,
-                  114
-                ]
+                kind: "const";
+                value: [111, 102, 102, 101, 114];
               },
               {
-                "kind": "arg",
-                "path": "maker"
+                kind: "arg";
+                path: "maker";
               },
               {
-                "kind": "arg",
-                "path": "id"
+                kind: "arg";
+                path: "id";
               }
-            ]
-          }
+            ];
+          };
         },
         {
-          "name": "vault",
-          "writable": true,
-          "pda": {
-            "seeds": [
+          name: "vault";
+          writable: true;
+          pda: {
+            seeds: [
               {
-                "kind": "account",
-                "path": "offer"
+                kind: "account";
+                path: "offer";
               },
               {
-                "kind": "account",
-                "path": "tokenProgram"
+                kind: "account";
+                path: "tokenProgram";
               },
               {
-                "kind": "account",
-                "path": "tokenMintA"
+                kind: "account";
+                path: "tokenMintA";
               }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
+            ];
+            program: {
+              kind: "const";
+              value: [
                 140,
                 151,
                 37,
@@ -690,86 +639,77 @@ export type SwapProgram = {
                 233,
                 248,
                 89
-              ]
-            }
-          }
+              ];
+            };
+          };
         },
         {
-          "name": "systemProgram",
-          "address": "11111111111111111111111111111111"
+          name: "systemProgram";
+          address: "11111111111111111111111111111111";
         },
         {
-          "name": "tokenProgram"
+          name: "tokenProgram";
         },
         {
-          "name": "associatedTokenProgram",
-          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+          name: "associatedTokenProgram";
+          address: "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
         }
-      ],
-      "args": []
+      ];
+      args: [];
     }
-  ],
-  "accounts": [
+  ];
+  accounts: [
     {
-      "name": "offer",
-      "discriminator": [
-        215,
-        88,
-        60,
-        71,
-        170,
-        162,
-        73,
-        229
-      ]
+      name: "offer";
+      discriminator: [215, 88, 60, 71, 170, 162, 73, 229];
     }
-  ],
-  "errors": [
+  ];
+  errors: [
     {
-      "code": 6000,
-      "name": "customError",
-      "msg": "Custom error message"
+      code: 6000;
+      name: "customError";
+      msg: "Custom error message";
     }
-  ],
-  "types": [
+  ];
+  types: [
     {
-      "name": "offer",
-      "type": {
-        "kind": "struct",
-        "fields": [
+      name: "offer";
+      type: {
+        kind: "struct";
+        fields: [
           {
-            "name": "id",
-            "type": "u64"
+            name: "id";
+            type: "u64";
           },
           {
-            "name": "maker",
-            "type": "pubkey"
+            name: "maker";
+            type: "pubkey";
           },
           {
-            "name": "tokenMintA",
-            "type": "pubkey"
+            name: "tokenMintA";
+            type: "pubkey";
           },
           {
-            "name": "tokenMintB",
-            "type": "pubkey"
+            name: "tokenMintB";
+            type: "pubkey";
           },
           {
-            "name": "tokensWantedB",
-            "type": "u64"
+            name: "tokensWantedB";
+            type: "u64";
           },
           {
-            "name": "bump",
-            "type": "u8"
+            name: "bump";
+            type: "u8";
           }
-        ]
-      }
+        ];
+      };
     }
-  ],
-  "constants": [
+  ];
+  constants: [
     {
-      "name": "seed",
-      "type": "string",
-      "value": "\"anchor\""
+      name: "seed";
+      type: "string";
+      value: '"anchor"';
     }
-  ]
+  ];
 };

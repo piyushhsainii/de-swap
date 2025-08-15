@@ -1,6 +1,9 @@
 {
   "version": "0.1.0",
   "name": "swap_program",
+  "metadata": {
+    "address": "CFNL7NzBbS4tWAmWd5VKSkL34L1xdxqQYXX2ho5uExvH"
+  },
   "constants": [{ "name": "SEED", "type": "string", "value": "\"anchor\"" }],
   "instructions": [
     {
